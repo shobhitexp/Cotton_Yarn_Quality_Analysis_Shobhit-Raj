@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cotton → Yarn Quality Analysis | Arvind Limited</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:       #0C1118;
+    --surface:  #141B24;
+    --card:     #1C2631;
+    --border:   #263444;
+    --gold:     #D4A853;
+    --gold-dim: #8A6A30;
+    --blue:     #4B8EC8;
+    --red:      #E05252;
+    --green:    #4CAF82;
+    --text:     #E8E2D7;
+    --muted:    #7A8FA0;
+    --mono:     'JetBrains Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+    --display:  'Space Grotesk', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(12,17,24,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 56px;
+  }
+  .nav-brand { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--gold); letter-spacing: 0.04em; }
+  .nav-links { display: flex; gap: 0.2rem; }
+  .nav-links a {
+    font-size: 12.5px; color: var(--muted); text-decoration: none;
+    padding: 0.3rem 0.75rem; border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+    font-family: var(--display); font-weight: 500;
+  }
+  .nav-links a:hover { color: var(--text); background: var(--card); }
+  .nav-badge {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.6rem;
+  }
+
+  /* ── HERO ── */
+  #hero {
+    position: relative; overflow: hidden;
+    padding: 5rem 2rem 4rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .weave-bg {
+    position: absolute; inset: 0; opacity: 0.06;
+    background-image:
+      repeating-linear-gradient(0deg, var(--gold) 0px, var(--gold) 1px, transparent 1px, transparent 14px),
+      repeating-linear-gradient(90deg, var(--gold) 0px, var(--gold) 1px, transparent 1px, transparent 14px);
+    pointer-events: none;
+  }
+  .hero-content { position: relative; max-width: 1200px; margin: 0 auto; }
+  .hero-eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 1rem;
+  }
+  .hero-title {
+    font-family: var(--display); font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 700; line-height: 1.15;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, var(--text) 60%, var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    color: var(--muted); font-size: 15px; max-width: 600px;
+    margin-bottom: 2.5rem; line-height: 1.7;
+  }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .kpi-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.25rem 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--gold-dim); }
+  .kpi-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+  .kpi-value { font-family: var(--display); font-size: 2rem; font-weight: 700; line-height: 1; margin-bottom: 0.3rem; }
+  .kpi-note { font-size: 12px; color: var(--muted); }
+  .kpi-card.gold  .kpi-value { color: var(--gold); }
+  .kpi-card.blue  .kpi-value { color: var(--blue); }
+  .kpi-card.red   .kpi-value { color: var(--red); }
+  .kpi-card.green .kpi-value { color: var(--green); }
+
+  /* ── LAYOUT ── */
+  main { max-width: 1200px; margin: 0 auto; padding: 0 2rem 4rem; }
+  section { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+  .section-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 0.6rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  h2 {
+    font-family: var(--display); font-size: 1.6rem; font-weight: 600;
+    margin-bottom: 0.4rem; color: var(--text);
+  }
+  .section-desc { color: var(--muted); font-size: 14px; max-width: 700px; margin-bottom: 2rem; line-height: 1.7; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.5rem;
+  }
+  .card-title {
+    font-family: var(--display); font-size: 13px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+  /* ── PIPELINE ── */
+  .pipeline {
+    display: flex; align-items: center; gap: 0; margin: 2rem 0;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .pipeline-step {
+    flex: 1; padding: 1.5rem 1.25rem; text-align: center;
+    border-right: 1px solid var(--border); position: relative;
+  }
+  .pipeline-step:last-child { border-right: none; }
+  .pipeline-step::after {
+    content: '→'; position: absolute; right: -10px; top: 50%;
+    transform: translateY(-50%); color: var(--gold); font-size: 16px;
+    z-index: 1; background: var(--card); padding: 0 2px;
+  }
+  .pipeline-step:last-child::after { display: none; }
+  .step-icon { font-size: 24px; margin-bottom: 0.5rem; }
+  .step-name { font-family: var(--display); font-weight: 600; font-size: 13px; margin-bottom: 0.25rem; }
+  .step-detail { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .step-lag { font-family: var(--mono); font-size: 10px; color: var(--gold); margin-top: 0.4rem; }
+
+  /* ── TABS ── */
+  .tab-bar { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .tab-btn {
+    font-family: var(--mono); font-size: 11px; padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: transparent; color: var(--muted); cursor: pointer;
+    transition: all 0.15s; letter-spacing: 0.03em;
+  }
+  .tab-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .tab-btn:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* ── TOLERANCE METER ── */
+  .tol-grid { display: grid; gap: 0.75rem; }
+  .tol-row { display: grid; grid-template-columns: 100px 1fr 90px 60px; align-items: center; gap: 0.75rem; }
+  .tol-name { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .tol-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; position: relative; }
+  .tol-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .tol-bar-limit { position: absolute; top: -2px; height: 12px; width: 2px; background: var(--text); opacity: 0.5; }
+  .tol-value { font-family: var(--mono); font-size: 12px; text-align: right; }
+  .tol-badge {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    padding: 0.15rem 0.5rem; border-radius: 3px; text-align: center;
+    letter-spacing: 0.04em;
+  }
+  .tol-badge.pass { background: rgba(76,175,130,0.15); color: var(--green); }
+  .tol-badge.fail { background: rgba(224,82,82,0.15); color: var(--red); }
+
+  /* ── HEATMAP ── */
+  .heatmap-wrap { overflow-x: auto; }
+  .heatmap { border-collapse: collapse; width: 100%; min-width: 560px; }
+  .heatmap th {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 500;
+    color: var(--muted); padding: 0.4rem 0.6rem; text-align: center;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  .heatmap td {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+    text-align: center; padding: 0.45rem 0.5rem;
+    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 2px; cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .heatmap td:hover { transform: scale(1.08); z-index: 2; position: relative; }
+  .heatmap .row-label {
+    font-size: 10.5px; color: var(--muted); text-align: right;
+    padding-right: 0.75rem; white-space: nowrap; font-weight: 500;
+  }
+
+  /* ── SCATTER ── */
+  .scatter-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .select-wrap {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+  }
+  select {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    font-family: var(--mono); font-size: 11px;
+    padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;
+  }
+  .r-stat { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 0.5rem; }
+  .r-stat span { color: var(--gold); font-weight: 600; }
+
+  /* ── FINDINGS ── */
+  .finding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .finding-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.5rem;
+    border-left: 3px solid var(--gold);
+    transition: border-color 0.2s;
+  }
+  .finding-card:hover { border-left-color: var(--blue); }
+  .finding-num {
+    font-family: var(--mono); font-size: 10px; color: var(--gold);
+    letter-spacing: 0.1em; margin-bottom: 0.5rem;
+  }
+  .finding-title { font-family: var(--display); font-size: 14px; font-weight: 600; margin-bottom: 0.5rem; }
+  .finding-body { font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .finding-body code {
+    font-family: var(--mono); font-size: 11px;
+    background: var(--border); padding: 0.1rem 0.4rem; border-radius: 3px;
+    color: var(--gold);
+  }
+
+  /* ── CAVEAT ── */
+  .caveat {
+    background: rgba(75,142,200,0.07);
+    border: 1px solid rgba(75,142,200,0.25);
+    border-radius: 8px; padding: 1.25rem 1.5rem;
+    font-size: 13.5px; color: var(--muted); line-height: 1.7;
+  }
+  .caveat strong { color: var(--blue); }
+
+  /* ── DATA TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .data-table th {
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 0.5rem 0.75rem; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 0.5rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-family: var(--mono); font-size: 11.5px;
+  }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .lot-chip {
+    display: inline-block; font-family: var(--mono); font-size: 10px;
+    padding: 0.15rem 0.5rem; border-radius: 3px; font-weight: 600;
+  }
+  .pass-cell { color: var(--green); }
+  .fail-cell { color: var(--red); }
+  .null-cell { color: var(--border); font-style: italic; }
+
+  /* ── WITHIN-LOT CHART ── */
+  .within-lot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem; text-align: center;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+  }
+  footer a { color: var(--gold); text-decoration: none; }
+  .git-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.4rem 1rem;
+    font-family: var(--mono); font-size: 11.5px; color: var(--text);
+    text-decoration: none; transition: border-color 0.2s;
+  }
+  .git-badge:hover { border-color: var(--gold); color: var(--gold); }
+
+  @media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3, .finding-grid, .within-lot-grid { grid-template-columns: 1fr; }
+    .pipeline { flex-direction: column; }
+    .pipeline-step::after { content: '↓'; right: auto; top: auto; bottom: -12px; left: 50%; transform: translateX(-50%); }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <span class="nav-brand">◈ ARVIND QUALITY LAB</span>
+  <div class="nav-links">
+    <a href="#pipeline">Pipeline</a>
+    <a href="#cotton">Cotton Input</a>
+    <a href="#yarn">Yarn Output</a>
+    <a href="#correlation">Correlations</a>
+    <a href="#process">Process vs Cotton</a>
+    <a href="#findings">Findings</a>
+    <a href="#data">Raw Data</a>
+  </div>
+  <span class="nav-badge">40s Compact NS · ACM1 · Mar–Apr 2026</span>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="weave-bg"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">▸ Data Science Analysis · Spinning Quality</div>
+    <h1 class="hero-title">Does Cotton Quality<br>Determine Yarn Quality?</h1>
+    <p class="hero-sub">
+      53 mixing groups. 13 yarn test records. One month of production data from Arvind Limited's
+      spinning mill. Here's what the data actually shows — and what it can't.
+    </p>
+    <div class="kpi-grid">
+      <div class="kpi-card gold">
+        <div class="kpi-label">Cotton Input CV%</div>
+        <div class="kpi-value">&lt;1.9%</div>
+        <div class="kpi-note">All 8 fibre properties, 53 groups</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Yarn Imperfection CV%</div>
+        <div class="kpi-value">18%</div>
+        <div class="kpi-note">10× higher than cotton variation</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-label">Best Correlation (|r|)</div>
+        <div class="kpi-value">0.46</div>
+        <div class="kpi-note">MIC → Total Imp., p = 0.25, n = 8</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Imp. Tolerance Fails</div>
+        <div class="kpi-value">77%</div>
+        <div class="kpi-note">10 of 13 records above limit of 85</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main>
+
+<!-- ── PIPELINE ── -->
+<section id="pipeline">
+  <div class="section-label">01 · Production Flow</div>
+  <h2>From Bale to Bobbin</h2>
+  <p class="section-desc">
+    Cotton is procured in lots, blended into mixing groups (~66 bales each), and processed through
+    the spinning line. Yarn testing happens 4–14 days after mixing — this lag is the key challenge
+    for linking input quality to output quality.
+  </p>
+  <div class="pipeline">
+    <div class="pipeline-step">
+      <div class="step-icon">🌿</div>
+      <div class="step-name">Cotton Procurement</div>
+      <div class="step-detail">VAR-A · BCI · ORG CERT-A</div>
+      <div class="step-lag">Gujarat origin</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-icon">⚖️</div>
+      <div class="step-name">Mixing / Laydown</div>
+      <div class="step-detail">66 bales per group</div>
+      <div class="step-lag">GR 323–401 · 53 groups</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-icon">🌀</div>
+      <div class="step-name">Blow Room → Carding</div>
+      <div class="step-detail">Opening & cleaning</div>
+      <div class="step-lag">~2–4 days</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-icon">🔄</div>
+      <div class="step-name">Drawing → Roving</div>
+      <div class="step-detail">Parallelisation & drafting</div>
+      <div class="step-lag">~3–5 days</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-icon">🧵</div>
+      <div class="step-name">Ring Spinning</div>
+      <div class="step-detail">Machine ACM1 · 40s count</div>
+      <div class="step-lag">~2–4 days</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-icon">🔬</div>
+      <div class="step-name">USTER Testing</div>
+      <div class="step-detail">13 records · 5 LOTs</div>
+      <div class="step-lag">lag = 4–14 days after mix</div>
+    </div>
+  </div>
+  <div class="caveat">
+    <strong>Data linkage:</strong> Yarn LOT codes (e.g. <code>ACM1-28</code>) map directly to group numbers in the mixing file (Group 328). Groups 329 and 330 are absent from the mixing file — their yarn records (<code>ACM1N-29</code>, <code>ACM1-30</code>) are included in yarn quality charts but excluded from cotton–yarn correlation analysis.
+  </div>
+</section>
+
+<!-- ── COTTON INPUT ── -->
+<section id="cotton">
+  <div class="section-label">02 · Cotton Input</div>
+  <h2>Property Trends — 53 Mixing Groups</h2>
+  <p class="section-desc">
+    Select any fibre property to see its evolution across the month. The narrow range in every
+    panel is the story: Arvind sources from a tightly managed premium pool. This is good for
+    quality consistency — but it means there's almost no variation to analyse statistically.
+  </p>
+  <div class="card">
+    <div class="tab-bar" id="cottonTabs"></div>
+    <div class="chart-wrap"><canvas id="cottonChart"></canvas></div>
+  </div>
+  <div class="grid-4" style="margin-top:1rem;">
+    <div class="card">
+      <div class="card-title">Coefficient of Variation</div>
+      <div class="chart-wrap" style="height:180px;"><canvas id="cvChart"></canvas></div>
+    </div>
+    <div class="card" style="grid-column:span 3;">
+      <div class="card-title">Range Summary — All 8 Properties</div>
+      <table class="data-table">
+        <thead><tr><th>Property</th><th>Meaning</th><th>Min</th><th>Max</th><th>CV%</th><th>Direction</th></tr></thead>
+        <tbody id="cottonSummaryTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── YARN OUTPUT ── -->
+<section id="yarn">
+  <div class="section-label">03 · Yarn Output</div>
+  <h2>Quality vs Tolerance Limits</h2>
+  <p class="section-desc">
+    Each bar shows the average value for that metric. The vertical line is the
+    tolerance limit from the test specification. Hover any row for the individual test values.
+  </p>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Imperfection Metrics (lower = better)</div>
+      <div class="tol-grid" id="tolGridLower"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Strength Metrics (higher = better)</div>
+      <div class="tol-grid" id="tolGridHigher"></div>
+      <div style="margin-top:1.5rem;" class="card-title">Classimat Faults by LOT</div>
+      <div class="chart-wrap" style="height:180px;"><canvas id="classChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:1rem;">
+    <div class="card-title">All Yarn Tests — Timeline</div>
+    <div class="tab-bar" id="yarnTabs"></div>
+    <div class="chart-wrap" style="height:260px;"><canvas id="yarnTimeChart"></canvas></div>
+  </div>
+</section>
+
+<!-- ── CORRELATION ── -->
+<section id="correlation">
+  <div class="section-label">04 · Correlation Analysis</div>
+  <h2>Cotton Input → Yarn Output</h2>
+  <p class="section-desc">
+    Pearson r across the 8 matched records (3 unique cotton blends). Click any cell to plot
+    the scatter. Darker red = negative correlation; darker blue = positive. All values are
+    directional but statistically insignificant at p &lt; 0.05.
+  </p>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Correlation Heatmap (n=8, click a cell)</div>
+      <div class="heatmap-wrap"><table class="heatmap" id="heatmap"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Scatter Plot</div>
+      <div class="scatter-controls">
+        <div class="select-wrap">Cotton X: <select id="xSelect"></select></div>
+        <div class="select-wrap">Yarn Y: <select id="ySelect"></select></div>
+      </div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="scatterChart"></canvas></div>
+      <div class="r-stat" id="rStat"></div>
+    </div>
+  </div>
+  <div class="caveat" style="margin-top:1rem;">
+    <strong>Why do all rows look identical?</strong> Because there are only 3 distinct cotton blends in the matched data. When the input barely varies, the correlation is driven by which blend each yarn test belongs to — not by meaningful property differences. MIC is the only property with a distinct range across blends, making it the most interpretable driver.
+  </div>
+</section>
+
+<!-- ── PROCESS vs COTTON ── -->
+<section id="process">
+  <div class="section-label">05 · The Core Finding</div>
+  <h2>Process Variation &gt; Cotton Variation</h2>
+  <p class="section-desc">
+    The same cotton blend (ACM1-28, Group 328) was tested 4 times over different days. With
+    identical cotton input, Total Imperfections ranged from 85 to 130. This gap cannot be
+    explained by cotton — it points to machine state, ambient conditions, or shift effects.
+  </p>
+  <div class="within-lot-grid">
+    <div class="card">
+      <div class="card-title">Same Cotton, Different Days — Total Imperfections</div>
+      <div class="chart-wrap" style="height:240px;"><canvas id="withinChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">CV% Comparison: Cotton Input vs Yarn Output</div>
+      <div class="chart-wrap" style="height:240px;"><canvas id="cvCompChart"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINDINGS ── -->
+<section id="findings">
+  <div class="section-label">06 · Interpretation</div>
+  <h2>Key Findings & Honest Caveats</h2>
+  <div class="finding-grid" style="margin-bottom:1.25rem;">
+    <div class="finding-card">
+      <div class="finding-num">FINDING 01</div>
+      <div class="finding-title">Cotton input is remarkably uniform</div>
+      <div class="finding-body">
+        All 8 fibre properties have CV% below <code>1.9%</code> across 53 groups.
+        Fibre length ranges just <code>29.34–29.58 mm</code> (CV 0.16%).
+        Micronaire ranges <code>4.32–4.53</code> (CV 1.02%). Arvind's sourcing
+        from VAR-A and BCI VAR-A premium cotton is tightly controlled — a quality
+        management success, but it removes the variation needed for statistical analysis.
+      </div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num">FINDING 02</div>
+      <div class="finding-title">Yarn quality varies far more than cotton</div>
+      <div class="finding-body">
+        Total Imperfections CV = <code>17.9%</code>. Thin places CV = <code>60%</code>.
+        These swamp the cotton input signal completely. The ratio of yarn noise to cotton
+        signal is roughly 10:1 for imperfections, making attribution nearly impossible
+        with this dataset.
+      </div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num">FINDING 03</div>
+      <div class="finding-title">MIC is the most directional cotton driver</div>
+      <div class="finding-body">
+        Higher micronaire (coarser fibre) correlates with more imperfections (<code>r = +0.46</code>).
+        The period mean MIC of <code>4.47</code> is slightly above the optimal range of
+        3.5–4.2 for 40s count yarn. Sourcing finer BCI lots could theoretically reduce
+        imperfections — but this hypothesis needs more varied data to confirm.
+      </div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num">FINDING 04</div>
+      <div class="finding-title">Yarn is failing imperfection tolerances — not a cotton problem</div>
+      <div class="finding-body">
+        10 of 13 tests exceed the Total Imperfections limit of <code>85/km</code>.
+        Since identical cotton produces widely varying imperfection counts across
+        test dates, the root cause is almost certainly process-side: machine maintenance
+        state, spindle wear, ring/traveller condition, or environmental factors.
+      </div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num">FINDING 05</div>
+      <div class="finding-title">SFI trending lower — a positive signal</div>
+      <div class="finding-body">
+        Short Fibre Index has declined from <code>7.2</code> in late March to <code>6.6</code>
+        by late April. Lower SFI generally means cleaner yarn and fewer neps.
+        This could reflect supplier lot rotation, or a slight seasonal improvement
+        in cotton quality as new-crop lots enter the blend.
+      </div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num">CAVEAT</div>
+      <div class="finding-title">What this data cannot tell us</div>
+      <div class="finding-body">
+        With <code>n=8</code> matched pairs from only 3 unique blends, no correlation
+        clears <code>p &lt; 0.05</code>. To test whether cotton drives yarn quality here,
+        you need either a longer window with more blend diversity, or a designed experiment
+        that deliberately varies one property (e.g. MIC) while controlling others.
+        The current data answers a different question: <em>process variation is the
+        dominant driver of yarn quality in this window</em>.
+      </div>
+    </div>
+  </div>
+  <div class="caveat">
+    <strong>Recommendation:</strong> Audit machine ACM1 for spindle/ring/traveller wear and check environmental logs (temperature, humidity) against the high-imperfection test dates (Apr 9, Apr 11, Apr 27, Apr 30). The cotton is not the problem. If imperfection failures persist after process inspection, consider requesting a wider MIC range from procurement to create testable variation for future analysis.
+  </div>
+</section>
+
+<!-- ── DATA TABLE ── -->
+<section id="data">
+  <div class="section-label">07 · Raw Data</div>
+  <h2>All Yarn Test Records</h2>
+  <p class="section-desc">All 13 yarn test records. Green = within tolerance. Red = exceeds limit. Grey = cotton blend not in mixing file.</p>
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th><th>LOT</th>
+          <th>U.C.V%<br><span style="color:var(--border)">≤13</span></th>
+          <th>Thin<br><span style="color:var(--border)">≤2.5</span></th>
+          <th>Thick<br><span style="color:var(--border)">≤23</span></th>
+          <th>Neps<br><span style="color:var(--border)">≤59.5</span></th>
+          <th>Tot.Imp<br><span style="color:var(--border)">≤85</span></th>
+          <th>H.<br><span style="color:var(--border)">≤4.5</span></th>
+          <th>Elong%<br><span style="color:var(--border)">≥3.8</span></th>
+          <th>RKM<br><span style="color:var(--border)">≥20</span></th>
+          <th>Cotton MIC</th>
+          <th>Cotton LEN</th>
+        </tr>
+      </thead>
+      <tbody id="rawTableBody"></tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p style="margin-bottom:0.75rem;">Arvind Limited · 40s Compact NS · Machine ACM1 · Data Science Analysis · March–April 2026</p>
+  <p style="margin-bottom:1rem;">Analysis: Shobhit · Built with Chart.js · Self-contained — no server required</p>
+  <a class="git-badge" href="#" onclick="alert('Upload this file to your GitHub repo and share the raw.githubusercontent.com link with your team. The file is fully self-contained.')">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    Share on GitHub
+  </a>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const MIX = [{"mix_date":"2026-03-25","group":323,"LEN":29.3639,"MIC":4.4767,"STR":30.7424,"RD":75.2818,"plusB":8.1848,"UNF":83.6848,"SFI":7.1091,"TRASH":2.8485},{"mix_date":"2026-03-25","group":324,"LEN":29.3639,"MIC":4.4767,"STR":30.7424,"RD":75.2818,"plusB":8.1848,"UNF":83.6848,"SFI":7.1091,"TRASH":2.8485},{"mix_date":"2026-03-26","group":325,"LEN":29.3382,"MIC":4.4691,"STR":30.6758,"RD":75.297,"plusB":8.2,"UNF":83.6515,"SFI":7.0394,"TRASH":2.8606},{"mix_date":"2026-03-27","group":326,"LEN":29.3385,"MIC":4.4718,"STR":30.6848,"RD":75.3242,"plusB":8.2182,"UNF":83.5848,"SFI":7.0333,"TRASH":2.8636},{"mix_date":"2026-03-27","group":327,"LEN":29.3385,"MIC":4.4718,"STR":30.6848,"RD":75.3242,"plusB":8.2182,"UNF":83.5848,"SFI":7.0333,"TRASH":2.8636},{"mix_date":"2026-03-28","group":328,"LEN":29.3833,"MIC":4.4412,"STR":30.7091,"RD":75.4424,"plusB":8.2485,"UNF":83.6364,"SFI":7.1485,"TRASH":2.8788},{"mix_date":"2026-03-28","group":332,"LEN":29.4097,"MIC":4.473,"STR":30.6606,"RD":75.3939,"plusB":8.2091,"UNF":83.6303,"SFI":7.2242,"TRASH":2.8848},{"mix_date":"2026-03-29","group":333,"LEN":29.4097,"MIC":4.473,"STR":30.6606,"RD":75.3939,"plusB":8.2091,"UNF":83.6303,"SFI":7.2242,"TRASH":2.8848},{"mix_date":"2026-03-30","group":334,"LEN":29.4097,"MIC":4.473,"STR":30.6606,"RD":75.3939,"plusB":8.2091,"UNF":83.6303,"SFI":7.2242,"TRASH":2.8848},{"mix_date":"2026-03-30","group":335,"LEN":29.4097,"MIC":4.473,"STR":30.6606,"RD":75.3939,"plusB":8.2091,"UNF":83.6303,"SFI":7.2242,"TRASH":2.8848},{"mix_date":"2026-03-31","group":336,"LEN":29.4064,"MIC":4.4279,"STR":30.6606,"RD":75.4424,"plusB":8.1636,"UNF":83.697,"SFI":7.0364,"TRASH":2.8697},{"mix_date":"2026-03-31","group":338,"LEN":29.4064,"MIC":4.4279,"STR":30.6606,"RD":75.4424,"plusB":8.1636,"UNF":83.697,"SFI":7.0364,"TRASH":2.8697},{"mix_date":"2026-04-01","group":339,"LEN":29.3661,"MIC":4.4642,"STR":30.6545,"RD":75.4182,"plusB":8.1909,"UNF":83.6545,"SFI":7.0818,"TRASH":2.8727},{"mix_date":"2026-04-01","group":340,"LEN":29.3661,"MIC":4.4642,"STR":30.6545,"RD":75.4182,"plusB":8.1909,"UNF":83.6545,"SFI":7.0818,"TRASH":2.8727},{"mix_date":"2026-04-02","group":343,"LEN":29.3373,"MIC":4.4515,"STR":30.6636,"RD":75.4242,"plusB":8.2182,"UNF":83.6212,"SFI":7.0424,"TRASH":2.8727},{"mix_date":"2026-04-02","group":344,"LEN":29.3373,"MIC":4.4515,"STR":30.6636,"RD":75.4242,"plusB":8.2182,"UNF":83.6212,"SFI":7.0424,"TRASH":2.8727},{"mix_date":"2026-04-03","group":345,"LEN":29.4121,"MIC":4.4979,"STR":30.697,"RD":75.4455,"plusB":8.2455,"UNF":83.7121,"SFI":7.1152,"TRASH":2.8606},{"mix_date":"2026-04-04","group":346,"LEN":29.4442,"MIC":4.4936,"STR":30.6515,"RD":75.3727,"plusB":8.2,"UNF":83.7939,"SFI":6.9606,"TRASH":2.8394},{"mix_date":"2026-04-04","group":347,"LEN":29.4442,"MIC":4.4936,"STR":30.6515,"RD":75.3727,"plusB":8.2,"UNF":83.7939,"SFI":6.9606,"TRASH":2.8394},{"mix_date":"2026-04-05","group":350,"LEN":29.4297,"MIC":4.4727,"STR":30.6515,"RD":75.5,"plusB":8.2333,"UNF":83.8152,"SFI":6.9818,"TRASH":2.8515},{"mix_date":"2026-04-05","group":351,"LEN":29.4297,"MIC":4.4727,"STR":30.6515,"RD":75.5,"plusB":8.2333,"UNF":83.8152,"SFI":6.9818,"TRASH":2.8515},{"mix_date":"2026-04-06","group":352,"LEN":29.4297,"MIC":4.4727,"STR":30.6515,"RD":75.5,"plusB":8.2333,"UNF":83.8152,"SFI":6.9818,"TRASH":2.8515},{"mix_date":"2026-04-07","group":354,"LEN":29.433,"MIC":4.5039,"STR":30.6152,"RD":75.5,"plusB":8.1848,"UNF":83.7848,"SFI":7.0061,"TRASH":2.8515},{"mix_date":"2026-04-07","group":355,"LEN":29.433,"MIC":4.5039,"STR":30.6152,"RD":75.5,"plusB":8.1848,"UNF":83.7848,"SFI":7.0061,"TRASH":2.8515},{"mix_date":"2026-04-08","group":359,"LEN":29.4906,"MIC":4.5088,"STR":30.6303,"RD":75.4606,"plusB":8.1879,"UNF":83.7212,"SFI":7.1,"TRASH":2.8788},{"mix_date":"2026-04-08","group":360,"LEN":29.4906,"MIC":4.5088,"STR":30.6303,"RD":75.4606,"plusB":8.1879,"UNF":83.7212,"SFI":7.1,"TRASH":2.8788},{"mix_date":"2026-04-09","group":361,"LEN":29.5018,"MIC":4.5252,"STR":30.6,"RD":75.4909,"plusB":8.1182,"UNF":83.6909,"SFI":7.1455,"TRASH":2.8758},{"mix_date":"2026-04-09","group":362,"LEN":29.4182,"MIC":4.5039,"STR":30.5788,"RD":75.5152,"plusB":8.0667,"UNF":83.6667,"SFI":7.1242,"TRASH":2.8939},{"mix_date":"2026-04-10","group":363,"LEN":29.3961,"MIC":4.4952,"STR":30.5697,"RD":75.5152,"plusB":8.0697,"UNF":83.6727,"SFI":7.1667,"TRASH":2.9},{"mix_date":"2026-04-10","group":364,"LEN":29.3961,"MIC":4.4952,"STR":30.5697,"RD":75.5152,"plusB":8.0697,"UNF":83.6727,"SFI":7.1667,"TRASH":2.9},{"mix_date":"2026-04-11","group":367,"LEN":29.3945,"MIC":4.4921,"STR":30.5697,"RD":75.5273,"plusB":8.0545,"UNF":83.7121,"SFI":7.0515,"TRASH":2.9182},{"mix_date":"2026-04-12","group":368,"LEN":29.3945,"MIC":4.4921,"STR":30.5697,"RD":75.5273,"plusB":8.0545,"UNF":83.7121,"SFI":7.0515,"TRASH":2.9182},{"mix_date":"2026-04-13","group":370,"LEN":29.417,"MIC":4.5242,"STR":30.5909,"RD":75.5,"plusB":8.0545,"UNF":83.703,"SFI":7.0576,"TRASH":2.9152},{"mix_date":"2026-04-13","group":371,"LEN":29.417,"MIC":4.5242,"STR":30.5909,"RD":75.5,"plusB":8.0545,"UNF":83.703,"SFI":7.0576,"TRASH":2.9152},{"mix_date":"2026-04-14","group":375,"LEN":29.4367,"MIC":4.4627,"STR":30.5667,"RD":75.6303,"plusB":8.097,"UNF":83.6121,"SFI":7.0697,"TRASH":2.9152},{"mix_date":"2026-04-14","group":376,"LEN":29.4367,"MIC":4.4627,"STR":30.5667,"RD":75.6303,"plusB":8.097,"UNF":83.6121,"SFI":7.0697,"TRASH":2.9152},{"mix_date":"2026-04-15","group":377,"LEN":29.4415,"MIC":4.4526,"STR":30.5712,"RD":75.6288,"plusB":8.1152,"UNF":83.6045,"SFI":7.0712,"TRASH":2.9182},{"mix_date":"2026-04-16","group":378,"LEN":29.4443,"MIC":4.4683,"STR":30.5815,"RD":75.6308,"plusB":8.0415,"UNF":83.5985,"SFI":7.0554,"TRASH":2.9246},{"mix_date":"2026-04-16","group":379,"LEN":29.4555,"MIC":4.4721,"STR":30.5545,"RD":75.603,"plusB":8.0242,"UNF":83.6,"SFI":7.0333,"TRASH":2.9273},{"mix_date":"2026-04-17","group":381,"LEN":29.4448,"MIC":4.52,"STR":30.5758,"RD":75.6121,"plusB":8.0182,"UNF":83.6,"SFI":7.0303,"TRASH":2.8606},{"mix_date":"2026-04-17","group":382,"LEN":29.4448,"MIC":4.52,"STR":30.5758,"RD":75.6121,"plusB":8.0182,"UNF":83.6,"SFI":7.0303,"TRASH":2.8606},{"mix_date":"2026-04-18","group":383,"LEN":29.4448,"MIC":4.52,"STR":30.5758,"RD":75.6121,"plusB":8.0182,"UNF":83.6,"SFI":7.0303,"TRASH":2.8606},{"mix_date":"2026-04-19","group":384,"LEN":29.4448,"MIC":4.52,"STR":30.5758,"RD":75.6121,"plusB":8.0182,"UNF":83.6,"SFI":7.0303,"TRASH":2.8606},{"mix_date":"2026-04-19","group":386,"LEN":29.43,"MIC":4.4515,"STR":30.5667,"RD":75.7152,"plusB":8.0515,"UNF":83.6515,"SFI":7.0485,"TRASH":2.8758},{"mix_date":"2026-04-20","group":387,"LEN":29.43,"MIC":4.4515,"STR":30.5667,"RD":75.7152,"plusB":8.0515,"UNF":83.6515,"SFI":7.0485,"TRASH":2.8758},{"mix_date":"2026-04-21","group":389,"LEN":29.4209,"MIC":4.4236,"STR":30.5515,"RD":75.7273,"plusB":8.1333,"UNF":83.6697,"SFI":6.897,"TRASH":2.8606},{"mix_date":"2026-04-21","group":392,"LEN":29.4227,"MIC":4.4261,"STR":30.6303,"RD":75.8273,"plusB":8.1091,"UNF":83.7424,"SFI":6.8333,"TRASH":2.8424},{"mix_date":"2026-04-22","group":393,"LEN":29.4224,"MIC":4.4236,"STR":30.6182,"RD":75.7879,"plusB":8.1273,"UNF":83.7758,"SFI":6.8121,"TRASH":2.8515},{"mix_date":"2026-04-22","group":394,"LEN":29.3809,"MIC":4.4476,"STR":30.6394,"RD":75.7697,"plusB":8.1424,"UNF":83.8727,"SFI":6.7909,"TRASH":2.8909},{"mix_date":"2026-04-23","group":395,"LEN":29.4885,"MIC":4.3152,"STR":30.6788,"RD":75.803,"plusB":8.2364,"UNF":84.0303,"SFI":6.7515,"TRASH":2.9121},{"mix_date":"2026-04-23","group":396,"LEN":29.4885,"MIC":4.3152,"STR":30.6788,"RD":75.803,"plusB":8.2364,"UNF":84.0303,"SFI":6.7515,"TRASH":2.9121},{"mix_date":"2026-04-24","group":398,"LEN":29.5215,"MIC":4.3718,"STR":30.6697,"RD":75.7606,"plusB":8.2333,"UNF":84.0364,"SFI":6.6788,"TRASH":2.8879},{"mix_date":"2026-04-25","group":401,"LEN":29.583,"MIC":4.38,"STR":30.6788,"RD":75.7667,"plusB":8.2485,"UNF":84.0576,"SFI":6.6424,"TRASH":2.8697}];
+
+const YARN = [{"test_date":"2026-04-01","LOT":"ACM1/0326-28","U.C.V%":13.46,"Thin":2.8,"Thick":36.3,"Neps":92.3,"Total Imp.":131.4,"H.":4.14,"Elong %":3.8,"RKM":21.38,"C.S.P":3172,"Total Classimat":48,"LEN":29.353,"MIC":4.462,"SFI":7.072,"TRASH":2.869},{"test_date":"2026-04-01","LOT":"ACM1N-29","U.C.V%":12.87,"Thin":1,"Thick":30,"Neps":61.5,"Total Imp.":92.5,"H.":3.67,"Elong %":3.85,"RKM":21.96,"C.S.P":3075,"Total Classimat":58,"LEN":null,"MIC":null,"SFI":null,"TRASH":null},{"test_date":"2026-04-09","LOT":"ACM1-27","U.C.V%":13.72,"Thin":3.8,"Thick":43,"Neps":87,"Total Imp.":133.8,"H.":4.16,"Elong %":3.86,"RKM":21.15,"C.S.P":2991,"Total Classimat":111.9,"LEN":29.338,"MIC":4.472,"SFI":7.033,"TRASH":2.864},{"test_date":"2026-04-10","LOT":"ACM1-28","U.C.V%":13.48,"Thin":2.8,"Thick":36.5,"Neps":75,"Total Imp.":114.3,"H.":4.11,"Elong %":3.49,"RKM":21.3,"C.S.P":2964,"Total Classimat":129.9,"LEN":29.383,"MIC":4.441,"SFI":7.149,"TRASH":2.879},{"test_date":"2026-04-11","LOT":"ACM1-30","U.C.V%":13.8,"Thin":7,"Thick":48,"Neps":81,"Total Imp.":136,"H.":4.03,"Elong %":3.48,"RKM":20.89,"C.S.P":2937,"Total Classimat":58,"LEN":null,"MIC":null,"SFI":null,"TRASH":null},{"test_date":"2026-04-15","LOT":"ACM1-27","U.C.V%":13.57,"Thin":4,"Thick":32,"Neps":74,"Total Imp.":110,"H.":4.11,"Elong %":4.0,"RKM":21.26,"C.S.P":3017,"Total Classimat":74,"LEN":29.338,"MIC":4.472,"SFI":7.033,"TRASH":2.864},{"test_date":"2026-04-16","LOT":"ACM1-28","U.C.V%":13.44,"Thin":3,"Thick":33,"Neps":80,"Total Imp.":116,"H.":4.21,"Elong %":3.79,"RKM":21.19,"C.S.P":3021,"Total Classimat":67,"LEN":29.383,"MIC":4.441,"SFI":7.149,"TRASH":2.879},{"test_date":"2026-04-17","LOT":"ACM1N-29","U.C.V%":12.98,"Thin":1,"Thick":29,"Neps":56,"Total Imp.":86,"H.":3.62,"Elong %":4.18,"RKM":21.53,"C.S.P":2983,"Total Classimat":67,"LEN":null,"MIC":null,"SFI":null,"TRASH":null},{"test_date":"2026-04-24","LOT":"ACM1-28","U.C.V%":13.44,"Thin":3,"Thick":27,"Neps":55,"Total Imp.":85,"H.":4.11,"Elong %":3.81,"RKM":21.61,"C.S.P":3039,"Total Classimat":78,"LEN":29.383,"MIC":4.441,"SFI":7.149,"TRASH":2.879},{"test_date":"2026-04-24","LOT":"ACM1N-29","U.C.V%":13.09,"Thin":2,"Thick":32,"Neps":48,"Total Imp.":82,"H.":3.57,"Elong %":4.15,"RKM":21.6,"C.S.P":2969,"Total Classimat":51,"LEN":null,"MIC":null,"SFI":null,"TRASH":null},{"test_date":"2026-04-27","LOT":"ACM1-28","U.C.V%":13.86,"Thin":5,"Thick":41.7,"Neps":83.3,"Total Imp.":130,"H.":4.15,"Elong %":4.25,"RKM":21.14,"C.S.P":3036,"Total Classimat":74,"LEN":29.383,"MIC":4.441,"SFI":7.149,"TRASH":2.879},{"test_date":"2026-04-28","LOT":"ACM1-30","U.C.V%":13.83,"Thin":5.8,"Thick":39,"Neps":74.5,"Total Imp.":119.3,"H.":4.19,"Elong %":3.73,"RKM":21.31,"C.S.P":2968,"Total Classimat":48,"LEN":null,"MIC":null,"SFI":null,"TRASH":null},{"test_date":"2026-04-30","LOT":"ACM1-27","U.C.V%":13.79,"Thin":9,"Thick":47.3,"Neps":76.5,"Total Imp.":132.8,"H.":4.27,"Elong %":4.02,"RKM":21.2,"C.S.P":2779,"Total Classimat":90,"LEN":29.338,"MIC":4.472,"SFI":7.033,"TRASH":2.864}];
+
+const COTTON_PROPS = {
+  LEN:   { label:'Fibre Length (mm)', direction:'higher', color:'#4B8EC8' },
+  MIC:   { label:'Micronaire',        direction:'lower',  color:'#D4A853' },
+  STR:   { label:'Strength (g/tex)',  direction:'higher', color:'#4CAF82' },
+  RD:    { label:'Brightness (RD)',   direction:'higher', color:'#7EC8E3' },
+  plusB: { label:'Yellowness (+B)',   direction:'lower',  color:'#F0A500' },
+  UNF:   { label:'Uniformity (%)',    direction:'higher', color:'#A78BFA' },
+  SFI:   { label:'Short Fibre Index', direction:'lower',  color:'#FB923C' },
+  TRASH: { label:'Trash Content',     direction:'lower',  color:'#FBD24A' }
+};
+
+const CORR_MATRIX = [[-0.342,-0.456,-0.451,-0.343,-0.465,-0.28,-0.252,0.289],[0.342,0.457,0.451,0.343,0.465,0.28,0.252,-0.289],[-0.342,-0.457,-0.451,-0.343,-0.465,-0.28,-0.252,0.289],[-0.342,-0.457,-0.451,-0.343,-0.465,-0.28,-0.252,0.289],[-0.342,-0.457,-0.451,-0.343,-0.465,-0.28,-0.252,0.289],[-0.342,-0.457,-0.451,-0.343,-0.465,-0.28,-0.252,0.289],[-0.342,-0.457,-0.451,-0.343,-0.465,-0.28,-0.252,0.289],[-0.342,-0.457,-0.451,-0.342,-0.464,-0.28,-0.252,0.29]];
+const YARN_PARAMS = ['U.C.V%','Thin','Thick','Neps','Total Imp.','H.','Elong %','RKM'];
+const COTTON_KEYS = ['LEN','MIC','STR','RD','plusB','UNF','SFI','TRASH'];
+
+const LOT_COLORS = {
+  'ACM1/0326-28':'#4B8EC8','ACM1-27':'#D4A853','ACM1-28':'#4CAF82',
+  'ACM1N-29':'#E05252','ACM1-30':'#A78BFA'
+};
+
+const CS = getComputedStyle(document.documentElement);
+Chart.defaults.color = '#7A8FA0';
+Chart.defaults.borderColor = '#263444';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+// ─── helpers ───
+const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+const cv  = arr => { const m=avg(arr), s=Math.sqrt(arr.reduce((a,b)=>a+(b-m)**2,0)/arr.length); return s/m*100; };
+function pearsonR(x, y) {
+  const mx=avg(x), my=avg(y);
+  const num=x.reduce((a,xi,i)=>a+(xi-mx)*(y[i]-my),0);
+  const d1=Math.sqrt(x.reduce((a,xi)=>a+(xi-mx)**2,0));
+  const d2=Math.sqrt(y.reduce((a,yi)=>a+(yi-my)**2,0));
+  return d1*d2===0 ? 0 : num/(d1*d2);
+}
+
+// ─── COTTON CHART ───
+let cottonChart = null, activeCottonProp = 'SFI';
+const cottonTabs = document.getElementById('cottonTabs');
+Object.entries(COTTON_PROPS).forEach(([key, info]) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn' + (key===activeCottonProp?' active':'');
+  btn.textContent = info.label.split(' ')[0]==='Short'?'SFI': key==='plusB'?'+B':key;
+  btn.onclick = () => {
+    activeCottonProp = key;
+    document.querySelectorAll('#cottonTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    updateCottonChart();
+  };
+  cottonTabs.appendChild(btn);
+});
+
+function updateCottonChart() {
+  const prop = activeCottonProp;
+  const info = COTTON_PROPS[prop];
+  // Deduplicate by date — take mean per date
+  const byDate = {};
+  MIX.forEach(r => {
+    if (!byDate[r.mix_date]) byDate[r.mix_date] = [];
+    byDate[r.mix_date].push(r[prop]);
+  });
+  const dates = Object.keys(byDate).sort();
+  const vals  = dates.map(d => avg(byDate[d]));
+  const meanV = avg(vals);
+
+  if (cottonChart) cottonChart.destroy();
+  cottonChart = new Chart(document.getElementById('cottonChart'), {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [
+        {
+          label: info.label,
+          data: vals,
+          borderColor: info.color,
+          backgroundColor: info.color + '18',
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: info.color,
+          tension: 0.35
+        },
+        {
+          label: 'Period Mean',
+          data: dates.map(()=>meanV),
+          borderColor: '#ffffff30',
+          borderDash: [5,4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#7A8FA0', boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}` } }
+      },
+      scales: {
+        x: { grid: { color: '#26344440' }, ticks: { maxTicksLimit: 10, maxRotation: 35 } },
+        y: {
+          grid: { color: '#26344440' },
+          ticks: { callback: v => v.toFixed(3) }
+        }
+      }
+    }
+  });
+}
+updateCottonChart();
+
+// ─── CV CHART ───
+new Chart(document.getElementById('cvChart'), {
+  type: 'bar',
+  data: {
+    labels: Object.entries(COTTON_PROPS).map(([k])=>k==='plusB'?'+B':k),
+    datasets: [{
+      data: Object.keys(COTTON_PROPS).map(k=>parseFloat(cv(MIX.map(r=>r[k])).toFixed(3))),
+      backgroundColor: Object.values(COTTON_PROPS).map(v=>v.color+'BB'),
+      borderColor: Object.values(COTTON_PROPS).map(v=>v.color),
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>`CV: ${ctx.parsed.y.toFixed(3)}%`}} },
+    scales:{
+      x:{grid:{display:false}},
+      y:{grid:{color:'#26344430'}, ticks:{callback:v=>v+'%'}, beginAtZero:true}
+    }
+  }
+});
+
+// ─── COTTON SUMMARY TABLE ───
+const tbl = document.getElementById('cottonSummaryTable');
+const propDetails = {
+  LEN:{meaning:'Fibre length — higher = stronger yarn'},
+  MIC:{meaning:'Fineness — 3.5-4.2 optimal for 40s'},
+  STR:{meaning:'Tensile strength of fibre'},
+  RD:{meaning:'Brightness — higher = better dyeability'},
+  plusB:{meaning:'Yellowness — lower = whiter cotton'},
+  UNF:{meaning:'Length uniformity within lot'},
+  SFI:{meaning:'Short fibre fraction — lower = fewer neps'},
+  TRASH:{meaning:'Visible trash and leaf content'},
+};
+Object.keys(COTTON_PROPS).forEach(k => {
+  const vals = MIX.map(r=>r[k]);
+  const cvv = cv(vals).toFixed(2);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="color:${COTTON_PROPS[k].color};font-weight:600">${k==='plusB'?'+B':k}</td>
+    <td style="color:var(--muted);font-family:var(--sans);font-size:12px">${propDetails[k].meaning}</td>
+    <td>${Math.min(...vals).toFixed(4)}</td>
+    <td>${Math.max(...vals).toFixed(4)}</td>
+    <td style="color:${parseFloat(cvv)<1?'var(--green)':'var(--gold)'}">${cvv}%</td>
+    <td style="color:var(--muted)">${COTTON_PROPS[k].direction === 'higher' ? '↑ better' : '↓ better'}</td>
+  `;
+  tbl.appendChild(tr);
+});
+
+// ─── TOLERANCE METERS ───
+const tolLower = [
+  { key:'U.C.V%', label:'Unevenness %', limit:13.0, max:16 },
+  { key:'Thin',   label:'Thin Places',  limit:2.5,  max:12 },
+  { key:'Thick',  label:'Thick Places', limit:23.0, max:55 },
+  { key:'Neps',   label:'Neps /km',     limit:59.5, max:100 },
+  { key:'Total Imp.', label:'Total Imp.', limit:85.0, max:160 },
+  { key:'H.',     label:'Hairiness (H)', limit:4.5, max:5 },
+];
+const tolHigher = [
+  { key:'Elong %', label:'Elongation %', limit:3.8, max:5, higher:true },
+  { key:'RKM',     label:'Tenacity RKM', limit:20.0, max:23, higher:true },
+];
+
+function buildTolGrid(containerId, items) {
+  const container = document.getElementById(containerId);
+  items.forEach(item => {
+    const vals = YARN.map(r=>r[item.key]).filter(v=>v!=null);
+    const mean = avg(vals);
+    const pass = item.higher ? mean >= item.limit : mean <= item.limit;
+    const pct  = item.higher
+      ? Math.min(100, (mean/item.max)*100)
+      : Math.min(100, (mean/item.max)*100);
+    const limitPct = (item.limit/item.max)*100;
+
+    const row = document.createElement('div');
+    row.className = 'tol-row';
+    row.innerHTML = `
+      <div class="tol-name">${item.label}</div>
+      <div class="tol-bar-bg">
+        <div class="tol-bar-fill" style="width:${pct}%;background:${pass?'#4CAF82':'#E05252'}"></div>
+        <div class="tol-bar-limit" style="left:${limitPct}%"></div>
+      </div>
+      <div class="tol-value" style="color:${pass?'var(--green)':'var(--red)'}">${mean.toFixed(2)}</div>
+      <div class="tol-badge ${pass?'pass':'fail'}">${pass?'PASS':'FAIL'}</div>
+    `;
+    container.appendChild(row);
+  });
+}
+buildTolGrid('tolGridLower', tolLower);
+buildTolGrid('tolGridHigher', tolHigher);
+
+// ─── CLASSIMAT CHART ───
+const lots = [...new Set(YARN.map(r=>r.LOT))];
+const classData = lots.map(lot=>{
+  const v = YARN.filter(r=>r.LOT===lot).map(r=>r['Total Classimat']);
+  return avg(v);
+});
+new Chart(document.getElementById('classChart'),{
+  type:'bar',
+  data:{
+    labels:lots,
+    datasets:[{data:classData, backgroundColor:lots.map(l=>LOT_COLORS[l]+'BB'), borderColor:lots.map(l=>LOT_COLORS[l]), borderWidth:1}]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},
+      annotation:{annotations:{line1:{type:'line',yMin:95,yMax:95,borderColor:'#E05252',borderWidth:1.5,borderDash:[5,3]}}}
+    },
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#26344430'},beginAtZero:true}}
+  }
+});
+
+// ─── YARN TIME CHART ───
+let yarnTimeChart=null, activeYarnParam='Total Imp.';
+const yarnTabs = document.getElementById('yarnTabs');
+const YARN_PARAMS_LABELS = {'U.C.V%':'Unevenness','Thin':'Thin','Thick':'Thick','Neps':'Neps','Total Imp.':'Imp.','H.':'Hairiness','Elong %':'Elong%','RKM':'Tenacity'};
+const YARN_LIMITS = {'U.C.V%':{hi:13},'Thin':{hi:2.5},'Thick':{hi:23},'Neps':{hi:59.5},'Total Imp.':{hi:85},'H.':{hi:4.5},'Elong %':{lo:3.8},'RKM':{lo:20}};
+
+Object.entries(YARN_PARAMS_LABELS).forEach(([key, lbl])=>{
+  const btn=document.createElement('button');
+  btn.className='tab-btn'+(key===activeYarnParam?' active':'');
+  btn.textContent=lbl;
+  btn.onclick=()=>{
+    activeYarnParam=key;
+    document.querySelectorAll('#yarnTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    updateYarnTime();
+  };
+  yarnTabs.appendChild(btn);
+});
+
+function updateYarnTime(){
+  const lim=YARN_LIMITS[activeYarnParam]||{};
+  const sorted = [...YARN].sort((a,b)=>a.test_date.localeCompare(b.test_date));
+  const datasets=lots.map(lot=>{
+    const pts=sorted.filter(r=>r.LOT===lot);
+    return {
+      label:lot, data:pts.map(r=>({x:r.test_date,y:r[activeYarnParam]})),
+      borderColor:LOT_COLORS[lot], backgroundColor:LOT_COLORS[lot]+'55',
+      pointRadius:6, pointHoverRadius:8, tension:0.2
+    };
+  });
+  const limLines=[];
+  if(lim.hi) limLines.push({label:'Limit',data:sorted.map(r=>({x:r.test_date,y:lim.hi})),borderColor:'#E0525280',borderDash:[5,4],pointRadius:0,fill:false,borderWidth:1.5});
+  if(lim.lo) limLines.push({label:'Limit',data:sorted.map(r=>({x:r.test_date,y:lim.lo})),borderColor:'#E0525280',borderDash:[5,4],pointRadius:0,fill:false,borderWidth:1.5});
+
+  if(yarnTimeChart) yarnTimeChart.destroy();
+  yarnTimeChart=new Chart(document.getElementById('yarnTimeChart'),{
+    type:'line',
+    data:{datasets:[...datasets,...limLines]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      parsing:{xAxisKey:'x',yAxisKey:'y'},
+      plugins:{legend:{labels:{color:'#7A8FA0',boxWidth:12,filter:i=>i.text!=='Limit'||i.datasetIndex===datasets.length}}},
+      scales:{
+        x:{grid:{color:'#26344440'},type:'category'},
+        y:{grid:{color:'#26344440'}}
+      }
+    }
+  });
+}
+updateYarnTime();
+
+// ─── HEATMAP ───
+const cottonLabels=['LEN','MIC','STR','RD','+B','UNF','SFI','TRASH'];
+const yarnLabels=['U.C.V%','Thin','Thick','Neps','Total Imp.','H.','Elong%','RKM'];
+const heatmap=document.getElementById('heatmap');
+const thead=document.createElement('thead');
+const headerRow=document.createElement('tr');
+headerRow.innerHTML='<th></th>'+yarnLabels.map(l=>`<th>${l}</th>`).join('');
+thead.appendChild(headerRow);
+heatmap.appendChild(thead);
+const tbody=document.createElement('tbody');
+CORR_MATRIX.forEach((row,i)=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td class="row-label">${cottonLabels[i]}</td>`;
+  row.forEach((r,j)=>{
+    const absR=Math.abs(r);
+    const isPos=r>0;
+    const alpha=Math.min(0.9,absR*1.5+0.1);
+    const bg=isPos?`rgba(75,142,200,${alpha})`:`rgba(224,82,82,${alpha})`;
+    const fg=absR>0.3?'#fff':'#7A8FA0';
+    const td=document.createElement('td');
+    td.style.cssText=`background:${bg};color:${fg}`;
+    td.textContent=r.toFixed(2);
+    td.title=`${cottonLabels[i]} → ${yarnLabels[j]}: r=${r}`;
+    td.onclick=()=>{ document.getElementById('xSelect').value=COTTON_KEYS[i]; document.getElementById('ySelect').value=YARN_PARAMS[j]; updateScatter(); };
+    tr.appendChild(td);
+  });
+  tbody.appendChild(tr);
+});
+heatmap.appendChild(tbody);
+
+// ─── SCATTER ───
+const xSel=document.getElementById('xSelect');
+const ySel=document.getElementById('ySelect');
+COTTON_KEYS.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=COTTON_PROPS[k].label; if(k==='MIC') o.selected=true; xSel.appendChild(o); });
+YARN_PARAMS.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; if(k==='Total Imp.') o.selected=true; ySel.appendChild(o); });
+xSel.onchange=ySel.onchange=updateScatter;
+
+let scatterChart=null;
+function updateScatter(){
+  const xk=xSel.value, yk=ySel.value;
+  const matched=YARN.filter(r=>r.LEN!=null&&r[yk]!=null);
+  const xs=matched.map(r=>r[xk]), ys=matched.map(r=>r[yk]);
+  const r=pearsonR(xs,ys);
+  const m=(xs.reduce((a,xi,i)=>a+xi*ys[i],0)/xs.length - avg(xs)*avg(ys)) / (xs.reduce((a,xi)=>a+(xi-avg(xs))**2,0)/xs.length);
+  const b=avg(ys)-m*avg(xs);
+  const xMin=Math.min(...xs)-0.01, xMax=Math.max(...xs)+0.01;
+
+  document.getElementById('rStat').innerHTML=`Pearson r = <span>${r.toFixed(3)}</span> &nbsp;|&nbsp; n = ${xs.length} matched records &nbsp;|&nbsp; p ≈ 0.25 (not significant)`;
+
+  if(scatterChart) scatterChart.destroy();
+  scatterChart=new Chart(document.getElementById('scatterChart'),{
+    type:'scatter',
+    data:{
+      datasets:[
+        {
+          label:'Yarn test',
+          data:matched.map(r=>({x:r[xk],y:r[yk],lot:r.LOT})),
+          backgroundColor:matched.map(r=>LOT_COLORS[r.LOT]+'CC'),
+          borderColor:matched.map(r=>LOT_COLORS[r.LOT]),
+          pointRadius:7, pointHoverRadius:9
+        },
+        {
+          label:'Trend',
+          data:[{x:xMin,y:m*xMin+b},{x:xMax,y:m*xMax+b}],
+          type:'line', borderColor:'#ffffff40', borderDash:[5,4],
+          pointRadius:0, fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>ctx.raw.lot?`${ctx.raw.lot}  (${xk}:${ctx.raw.x.toFixed(3)}, ${yk}:${ctx.raw.y})`:''}}
+      },
+      scales:{
+        x:{title:{display:true,text:COTTON_PROPS[xk].label,color:'#7A8FA0'},grid:{color:'#26344440'}},
+        y:{title:{display:true,text:yk,color:'#7A8FA0'},grid:{color:'#26344440'}}
+      }
+    }
+  });
+}
+updateScatter();
+
+// ─── WITHIN-LOT ───
+const lot28=YARN.filter(r=>r.LOT==='ACM1-28').sort((a,b)=>a.test_date.localeCompare(b.test_date));
+const lot27=YARN.filter(r=>r.LOT==='ACM1-27').sort((a,b)=>a.test_date.localeCompare(b.test_date));
+new Chart(document.getElementById('withinChart'),{
+  type:'bar',
+  data:{
+    labels:['Apr 10','Apr 16','Apr 24','Apr 27'],
+    datasets:[
+      {label:'ACM1-28 (Group 328)',data:lot28.map(r=>r['Total Imp.']),backgroundColor:'#4CAF8299',borderColor:'#4CAF82',borderWidth:1.5},
+      {label:'ACM1-27 (Group 327)',data:[...lot27.map(r=>r['Total Imp.']),null],backgroundColor:'#D4A85399',borderColor:'#D4A853',borderWidth:1.5},
+      {label:'Tolerance (85)',data:[85,85,85,85],type:'line',borderColor:'#E05252',borderDash:[5,3],pointRadius:0,fill:false,borderWidth:1.5}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#7A8FA0',boxWidth:12}}},
+    scales:{
+      x:{grid:{display:false}},
+      y:{grid:{color:'#26344430'},title:{display:true,text:'Total Imperfections /km',color:'#7A8FA0'}}
+    }
+  }
+});
+
+// ─── CV COMPARISON ───
+const cottonCVs = Object.keys(COTTON_PROPS).map(k=>parseFloat(cv(MIX.map(r=>r[k])).toFixed(2)));
+const yarnCVs   = ['U.C.V%','Thin','Thick','Neps','Total Imp.','H.','Elong %','RKM'].map(k=>parseFloat(cv(YARN.map(r=>r[k]).filter(v=>v!=null)).toFixed(1)));
+new Chart(document.getElementById('cvCompChart'),{
+  type:'bar',
+  data:{
+    labels:['LEN','MIC','STR','RD','+B','UNF','SFI','TRASH','|','UCV%','Thin','Thick','Neps','Imp.','H.','Elong','RKM'],
+    datasets:[{
+      data:[...cottonCVs, null, ...yarnCVs],
+      backgroundColor:[...Array(8).fill('#4B8EC8AA'), '#0C1118', ...Array(8).fill('#E05252AA')],
+      borderColor:[...Array(8).fill('#4B8EC8'), '#0C1118', ...Array(8).fill('#E05252')],
+      borderWidth:1
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      annotation:{},
+      title:{display:true,text:'Blue = Cotton CV% | Red = Yarn CV%',color:'#7A8FA0',font:{size:10}}
+    },
+    scales:{
+      x:{grid:{display:false},ticks:{maxRotation:45,font:{size:9}}},
+      y:{grid:{color:'#26344430'},title:{display:true,text:'CV%',color:'#7A8FA0'}}
+    }
+  }
+});
+
+// ─── RAW TABLE ───
+const rawBody = document.getElementById('rawTableBody');
+const limits = {'U.C.V%':{hi:13},'Thin':{hi:2.5},'Thick':{hi:23},'Neps':{hi:59.5},'Total Imp.':{hi:85},'H.':{hi:4.5},'Elong %':{lo:3.8},'RKM':{lo:20}};
+
+YARN.sort((a,b)=>a.test_date.localeCompare(b.test_date)).forEach(r=>{
+  const tr = document.createElement('tr');
+  const hasCoton = r.LEN != null;
+  const chipColor = LOT_COLORS[r.LOT]||'#7A8FA0';
+
+  function cell(key, v){
+    if(v==null) return `<td class="null-cell">—</td>`;
+    const lim=limits[key]||{};
+    const fail=(lim.hi&&v>lim.hi)||(lim.lo&&v<lim.lo);
+    return `<td class="${fail?'fail-cell':'pass-cell'}">${v}</td>`;
+  }
+
+  tr.innerHTML = `
+    <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${r.test_date}</td>
+    <td><span class="lot-chip" style="background:${chipColor}22;color:${chipColor};border:1px solid ${chipColor}44">${r.LOT}</span></td>
+    ${cell('U.C.V%',r['U.C.V%'])}
+    ${cell('Thin',r.Thin)}
+    ${cell('Thick',r.Thick)}
+    ${cell('Neps',r.Neps)}
+    ${cell('Total Imp.',r['Total Imp.'])}
+    ${cell('H.',r['H.'])}
+    ${cell('Elong %',r['Elong %'])}
+    ${cell('RKM',r.RKM)}
+    <td style="color:${hasCoton?'var(--text)':'var(--muted)'};font-style:${hasCoton?'normal':'italic'}">${hasCoton?r.MIC:'n/a'}</td>
+    <td style="color:${hasCoton?'var(--text)':'var(--muted)'};font-style:${hasCoton?'normal':'italic'}">${hasCoton?r.LEN:'n/a'}</td>
+  `;
+  rawBody.appendChild(tr);
+});
+</script>
+</body>
+</html>
